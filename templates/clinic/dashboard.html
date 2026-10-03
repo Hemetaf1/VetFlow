@@ -1,0 +1,33 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VetFlow | Clinic operations</title>
+  <link rel="stylesheet" href="{% static 'clinic/dashboard.css' %}">
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/">Vet<span>Flow</span></a>
+    <p class="eyebrow">CLINIC OPERATIONS</p>
+    <nav aria-label="Main navigation">
+      {% for activity in activities %}<a class="{% if activity.url_name == 'dashboard' %}active{% endif %}" href="{% if activity.url_name %}{% url activity.url_name %}{% else %}#{% endif %}">{{ activity.name }}</a>{% endfor %}
+      <a href="/admin/">Administration</a>
+    </nav>
+    <div class="sidebar-foot">{{ request.user.get_full_name|default:request.user.username }}<form method="post" action="/admin/logout/">{% csrf_token %}<button type="submit">Sign out</button></form></div>
+  </aside>
+  <main>
+    <header class="topbar"><div><p class="eyebrow">TODAY · {{ now|date:"D, M j" }}</p><h1>Visit board</h1></div><a class="button" href="/admin/apps/clinic/visit/add/">+ Schedule visit</a></header>
+    <section class="metrics" aria-label="Visit counts">
+      <div><span>Booked</span><strong>{{ state_counts.BOOKED }}</strong></div><div><span>Check-in &amp; triage</span><strong>{{ state_counts.CHECK_IN|add:state_counts.TRIAGE }}</strong></div><div><span>In care</span><strong>{{ state_counts.IN_EXAM|add:state_counts.PROCEDURE|add:state_counts.RECOVERY }}</strong></div><div><span>Ready to close</span><strong>{{ state_counts.DISCHARGE }}</strong></div>
+    </section>
+    <section class="board">
+      <div class="section-heading"><div><p class="eyebrow">LIVE SCHEDULE</p><h2>Upcoming visits</h2></div><span class="count">{{ visits|length }} shown</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Time</th><th>Patient</th><th>Owner</th><th>Branch</th><th>Veterinarian</th><th>State</th></tr></thead>
+      <tbody>{% for visit in visits %}<tr><td>{{ visit.scheduled_at|date:"H:i" }}</td><td><strong>{{ visit.patient.name }}</strong><small>{{ visit.patient.get_species_display }}{% if visit.patient.breed %} · {{ visit.patient.breed }}{% endif %}</small></td><td>{{ visit.patient.owner.name }}</td><td>{{ visit.branch }}</td><td>{{ visit.veterinarian.get_full_name|default:"Unassigned" }}</td><td><span class="state state-{{ visit.current_state|lower }}">{{ visit.get_current_state_display }}</span></td></tr>{% empty %}<tr><td colspan="6" class="empty">No visits scheduled yet. Add the first visit from the admin.</td></tr>{% endfor %}</tbody></table></div>
+    </section>
+    <footer>VetFlow <span>·</span> Sample clinic data only</footer>
+  </main>
+</body>
+</html>
